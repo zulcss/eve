@@ -247,10 +247,14 @@ func dialUnixWithChronyd(address string) (*chronyConn, error) {
 		&net.UnixAddr{Name: address, Net: "unixgram"},
 	)
 	if err != nil {
+		// Even there was an error, net.DialUnix() leaves trash behind.
+		// What a shame.
+		os.Remove(local)
 		return nil, err
 	}
 	if err := os.Chmod(local, 0600); err != nil {
 		conn.Close()
+		os.Remove(local)
 		return nil, err
 	}
 	return &chronyConn{Conn: conn, local: local}, nil
